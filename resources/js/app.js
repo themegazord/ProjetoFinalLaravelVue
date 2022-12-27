@@ -18,7 +18,7 @@ import { createStore } from 'VueX';
     state () {
       return {
         item: {},
-        transacao: {status: '', mensagem: ''}
+        transacao: {status: '', mensagem: '', data: {id: '', errors: {}}}
       }
     },
     mutations: {}

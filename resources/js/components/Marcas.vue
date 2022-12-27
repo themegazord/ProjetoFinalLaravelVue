@@ -261,20 +261,22 @@
         <!-- Inicio do modal de cadastro de marca -->
     <modal-component id="modalMarcaAtualizar" titulo="Atualização de marca">
       <template v-slot:alerta>
+        <alert-component v-if="$store.state.transacao.status == 'success'" :tipo="$store.state.transacao.status" :titulo="$store.state.transacao.mensagem" :responseApi="responseApi"></alert-component>
+        <alert-component v-if="$store.state.transacao.status == 'danger'" :tipo="$store.state.transacao.status" :titulo="$store.state.transacao.mensagem" :responseApi="responseApi"></alert-component>
       </template>
       <template v-slot:conteudo>
         <div class="form-group">
           <input-container-component
             titulo="Nome"
-            id="novoNome"
-            id-help="novoNomeHelp"
+            id="atualizaNome"
+            id-help="atualizaNomeHelp"
             texto-ajuda="Informe o nome da marca"
           >
             <input
               type="text"
               class="form-control"
-              id="novoNome"
-              aria-describedby="novoNomeHelp"
+              id="atualizaNome"
+              aria-describedby="atualizaNomeHelp"
               placeholder="Nome da marca"
               v-model="$store.state.item.nome"
             />
@@ -284,15 +286,15 @@
         <div class="form-group">
           <input-container-component
             titulo="Imagem"
-            id="novoImagem"
-            id-help="novoImagemHelp"
+            id="atualizaImagem"
+            id-help="atualizaImagemHelp"
             texto-ajuda="Selecione uma imagem no formato PNG"
           >
             <input
               type="file"
               class="form-control"
-              id="novoImagem"
-              aria-describedby="novoImagemHelp"
+              id="atualizaImagem"
+              aria-describedby="atualizaImagemHelp"
               placeholder="Selecione uma imagem"
               @change="carregarImagem($event)"
             />
@@ -330,9 +332,44 @@ export default {
 
   methods: {
     atualizar() {
-        console.log('nome atualizado', this.$store.state.item.nome)
-        console.log('imagem', this.arquivoImagem)
-        console.log('_method', 'patch')
+        this.$store.state.transacao.data.id = ''
+        this.$store.state.transacao.data.errors = {}
+
+        let url = this.urlBase + '/' + this.$store.state.item.id
+
+        let formData = new FormData()
+        formData.append('_method', 'patch')
+        formData.append('nome', this.$store.state.item.nome)
+        if(this.arquivoImagem[0]) {
+            formData.append('imagem', this.arquivoImagem[0])
+        }
+
+        let config = {
+            headers: {
+                'Authorization': this.token,
+                'Content-Type': 'multipart/form-data',
+                'Accept' : 'application/json'
+            }
+        }
+
+        axios.post(url, formData, config)
+        .then(response => {
+            // console.log('atualizado com sucesso', response.data.msg)
+            this.$store.state.transacao.status = 'success'
+            this.$store.state.transacao.mensagem = response.data.msg
+            this.$store.state.transacao.data.id = this.$store.state.item.id
+            this.responseApi = this.$store.state.transacao
+            atualizaImagem.value = ''
+            this.carregarLista();
+        })
+        .catch(errors => {
+            this.$store.state.transacao.status = 'danger'
+            this.$store.state.transacao.mensagem = 'Erro ao atualizar a marca'
+            this.$store.state.transacao.data.id = this.$store.state.item.id
+            this.$store.state.transacao.data.errors = errors.response.data.errors
+            atualizaImagem.value = ''
+            this.responseApi = this.$store.state.transacao
+        })
     },
     remover() {
       let confirmacao = confirm(
